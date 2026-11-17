@@ -1,0 +1,44 @@
+{
+ "seats": {
+  "contrarian": {
+   "label": "The Contrarian",
+   "line": "The Contrarian: assumes the plan has a fatal flaw and hunts for it. Names a specific risk, never \"there are risks\".",
+   "short": "Hunts for the flaw you're avoiding."
+  },
+  "first-principles": {
+   "label": "First Principles",
+   "line": "First Principles: asks what I'm really trying to solve and whether I'm asking the right question.",
+   "short": "Checks you're asking the right question."
+  },
+  "expansionist": {
+   "label": "The Expansionist",
+   "line": "The Expansionist: looks for the upside and the bigger opportunity everyone else is missing.",
+   "short": "Finds the upside you're underrating."
+  },
+  "outsider": {
+   "label": "The Outsider",
+   "line": "The Outsider: a smart stranger with zero context. Flags anything confusing or that only makes sense from the inside.",
+   "short": "Fresh eyes, no jargon, no context."
+  },
+  "executor": {
+   "label": "The Executor",
+   "line": "The Executor: only cares about doing it. The first step, the time, the cost, the bottleneck.",
+   "short": "\"What do you do Monday morning?\""
+  }
+ },
+ "styles": {
+  "gentle": "Be warm and encouraging, but still name the real risks.",
+  "direct": "Be direct: say plainly what's weak or risky.",
+  "brutal": "Be brutally honest: if the plan is bad, say so in the first line and don't soften it."
+ },
+ "lengths": {
+  "short": "50-80 words",
+  "standard": "80-150 words",
+  "long": "150-250 words"
+ },
+ "modes": {
+  "full": "full council",
+  "quick": "quick council"
+ },
+ "limit": 8000
+}

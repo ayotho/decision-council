@@ -1,1 +1,6 @@
 council.zip
+page/_preview.html
+.council-cache/
+.council-venv/
+council-files/
+__pycache__/

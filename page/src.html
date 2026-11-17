@@ -1,0 +1,408 @@
+<title>Decision Council</title>
+<meta charset="utf-8">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: step rail on the left (top strip on phones), one step at a time in the main column, a live roster of seats under each customising step */
+:root{--bg:#f4f5f8;--surface:#fff;--sunk:#eef0f4;--fg:#16202c;--muted:#5b6676;--line:#dce0e7;--accent:#2f5bd3;--accent-soft:#e5ebfb;--chair:#b0601a;--chair-soft:#f8ebdd;--good:#1f7a4d;--warn:#a1520b;
+--display:"Instrument Sans",system-ui,sans-serif;--body:"Instrument Sans",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f131a;--surface:#161b24;--sunk:#1b212c;--fg:#e8ecf2;--muted:#98a2b2;--line:#2a3140;--accent:#82a2f2;--accent-soft:#1c2640;--chair:#e3a15c;--chair-soft:#33251a;--good:#5fc795;--warn:#f0a85a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f131a;--surface:#161b24;--sunk:#1b212c;--fg:#e8ecf2;--muted:#98a2b2;--line:#2a3140;--accent:#82a2f2;--accent-soft:#1c2640;--chair:#e3a15c;--chair-soft:#33251a;--good:#5fc795;--warn:#f0a85a;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.55}
+.shell{max-width:1080px;margin:0 auto;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;grid-template-columns:230px minmax(0,1fr);gap:32px;align-items:start}
+@media (max-width:820px){.shell{grid-template-columns:minmax(0,1fr);gap:18px}}
+.brand{font-family:var(--display);font-weight:700;font-size:1.15rem;letter-spacing:-.01em;margin-bottom:14px}
+.brand small{display:block;font:400 .78rem var(--mono);color:var(--muted);letter-spacing:.02em}
+nav.rail{position:sticky;top:calc(16px + env(safe-area-inset-top,0px))}
+nav.rail ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+nav.rail ol button{all:unset;box-sizing:border-box;display:grid;grid-template-columns:26px 1fr;gap:10px;align-items:center;width:100%;padding:8px 10px;border-radius:8px;cursor:pointer;color:var(--muted);font-size:.95rem}
+nav.rail ol button:hover{background:var(--sunk)}
+nav.rail ol button:focus-visible{outline:2px solid var(--accent)}
+nav.rail .n{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font:500 .75rem var(--mono);border:1.5px solid var(--line);color:var(--muted)}
+nav.rail button[aria-current="step"]{background:var(--surface);color:var(--fg);font-weight:600;box-shadow:0 0 0 1px var(--line)}
+nav.rail button[aria-current="step"] .n{border-color:var(--accent);color:var(--accent)}
+nav.rail button.done .n{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+nav.rail button.skip{opacity:.5}
+.railfoot{margin-top:16px;display:flex;flex-direction:column;gap:6px}
+.linkbtn{all:unset;display:block;white-space:nowrap;text-align:left;cursor:pointer;color:var(--muted);font-size:.85rem;padding:2px 10px}
+.linkbtn:hover{color:var(--accent);text-decoration:underline}
+.linkbtn:focus-visible{outline:2px solid var(--accent)}
+@media (max-width:820px){
+ nav.rail{position:static}
+ nav.rail ol{flex-direction:row;overflow-x:auto;gap:4px;padding-bottom:4px}
+ nav.rail li{flex:0 0 auto}
+ nav.rail ol button{grid-template-columns:24px auto;padding:6px 10px}
+ nav.rail button .t{display:none}
+ nav.rail button[aria-current="step"] .t{display:inline}
+ .railfoot{flex-direction:row;flex-wrap:wrap;margin-top:6px}
+}
+main{min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:28px;display:flex;flex-direction:column;gap:22px}
+@media (max-width:520px){.panel{padding:20px 16px}}
+.eyebrow{font:500 .74rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:var(--display);font-size:clamp(1.9rem,5vw,2.6rem);line-height:1.08;letter-spacing:-.02em;margin:6px 0 0;text-wrap:balance}
+h2{font-family:var(--display);font-size:clamp(1.4rem,3.6vw,1.8rem);line-height:1.15;letter-spacing:-.015em;margin:6px 0 0;text-wrap:balance}
+h3{font-size:1.02rem;margin:0}
+p{margin:0}
+.lede{color:var(--muted);max-width:62ch;margin-top:10px}
+.muted{color:var(--muted)}
+.small{font-size:.88rem}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field label,.lbl{font-weight:600;font-size:.92rem}
+.hint{color:var(--muted);font-size:.85rem}
+input[type=text],input[type=url],textarea,select{font:inherit;font-size:.95rem;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:9px 11px;width:100%;min-width:0}
+textarea{min-height:96px;resize:vertical}
+input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:0;border-color:transparent}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{all:unset;box-sizing:border-box;cursor:pointer;border:1px solid var(--line);border-radius:999px;padding:6px 13px;font-size:.9rem;background:var(--surface)}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.choice{all:unset;box-sizing:border-box;cursor:pointer;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.choice b{font-size:.95rem}
+.choice span{color:var(--muted);font-size:.85rem}
+.choice[aria-pressed="true"],.choice[aria-checked="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.choice:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tag{display:inline-block;font:500 .68rem var(--mono);letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:5px;background:var(--sunk);color:var(--muted)}
+.tag.rec{background:var(--accent-soft);color:var(--accent)}
+.nav{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-top:6px;border-top:1px solid var(--line)}
+.btn{font:600 .95rem var(--body);border-radius:9px;padding:10px 18px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.sm{padding:6px 12px;font-size:.85rem}
+.presets{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.preset{all:unset;box-sizing:border-box;cursor:pointer;border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.preset b{font-size:.92rem}
+.preset span{color:var(--muted);font-size:.8rem}
+.preset[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.preset:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mlist{display:flex;flex-direction:column;gap:10px}
+.mcard{border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:10px;background:var(--bg)}
+.mcard .top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.mcard .top b{font-size:1rem}
+.mgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.err{color:var(--warn);font-size:.83rem}
+.okline{color:var(--good);font-size:.85rem}
+.counter{font:500 .8rem var(--mono);color:var(--muted)}
+.counter.over{color:var(--warn)}
+.roster{border:1px dashed var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.roster .seats{display:flex;flex-wrap:wrap;gap:6px}
+.seat{font-size:.84rem;padding:4px 10px;border-radius:999px;background:var(--accent-soft);color:var(--fg)}
+.seat.t{background:var(--sunk)}
+.seat.c{background:var(--chair-soft);color:var(--chair);font-weight:600}
+.copybox{border:1px solid var(--line);border-radius:12px;background:var(--bg);overflow:hidden;min-width:0}
+.copybar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--line);flex-wrap:wrap;background:var(--surface)}
+.copybar small{font:500 .76rem var(--mono);color:var(--muted)}
+pre{margin:0;padding:12px 14px;max-height:300px;overflow:auto;font:400 .8rem/1.5 var(--mono);white-space:pre-wrap;word-break:break-word;color:var(--fg)}
+.tabs{display:inline-flex;border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px;background:var(--bg)}
+.tabs button{all:unset;cursor:pointer;padding:6px 14px;border-radius:7px;font-size:.9rem}
+.tabs button[aria-selected="true"]{background:var(--surface);box-shadow:0 0 0 1px var(--line);font-weight:600}
+.tabs button:focus-visible{outline:2px solid var(--accent)}
+ol.steps{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:14px;counter-reset:s}
+ol.steps>li{counter-increment:s;display:grid;grid-template-columns:30px minmax(0,1fr);gap:12px;align-items:start}
+ol.steps>li::before{content:counter(s);width:26px;height:26px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font:500 .8rem var(--mono)}
+ol.steps>li>div{display:flex;flex-direction:column;gap:6px;min-width:0}
+.kbd{font:.86em var(--mono);background:var(--sunk);padding:1px 6px;border-radius:4px;word-break:break-word}
+details{border:1px solid var(--line);border-radius:10px;padding:10px 14px;background:var(--bg)}
+details summary{cursor:pointer;font-weight:600;font-size:.92rem}
+details>div{margin-top:8px;display:flex;flex-direction:column;gap:6px;font-size:.9rem;color:var(--muted)}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:.93rem}
+.check input{margin-top:4px;width:17px;height:17px;accent-color:var(--accent);flex:0 0 auto}
+.diagram{border:1px solid var(--line);border-radius:14px;padding:16px;background:var(--bg)}
+.diagram svg{width:100%;height:auto;display:block}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.fact{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.fact b{display:block;font-family:var(--display);font-size:1.25rem}
+.fact span{color:var(--muted);font-size:.83rem}
+.callout{border-left:3px solid var(--chair);background:var(--chair-soft);padding:10px 14px;border-radius:0 10px 10px 0;font-size:.92rem}
+a{color:var(--accent)}
+table.cmds{border-collapse:collapse;width:100%;font-size:.9rem}
+table.cmds td{border-top:1px solid var(--line);padding:8px 6px;vertical-align:top}
+table.cmds td:first-child{white-space:nowrap;width:1%}
+.wrapx{overflow-x:auto}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:9px 16px;border-radius:9px;font-size:.9rem;z-index:20}
+@media (prefers-reduced-motion:no-preference){.panel{animation:in .18s ease-out}@keyframes in{from{transform:translateY(4px)}to{transform:none}}}
+</style>
+
+<div class="shell">
+ <nav class="rail" aria-label="Setup steps">
+  <div class="brand">Decision Council<small>setup &middot; about 15 minutes</small></div>
+  <ol id="rail"></ol>
+  <div class="railfoot">
+   <button class="linkbtn" type="button" id="exportBtn">Copy my setup code</button>
+   <button class="linkbtn" type="button" id="importBtn">Load a setup code</button>
+   <button class="linkbtn" type="button" id="resetBtn">Start over</button>
+  </div>
+ </nav>
+ <main id="main"></main>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const TEMPLATE = __TEMPLATE_JSON__;
+const OPTS = __OPTIONS_JSON__;
+const SCRIPT_URL = "https://raw.githubusercontent.com/ayotho/decision-council/main/tools/build_mentors.py";
+const REPO_URL = "https://github.com/ayotho/decision-council";
+const PLANS = {free:{label:"Free",files:5,note:"5 files per project"},plus:{label:"Go or Plus",files:25,note:"25 files per project"},pro:{label:"Pro, Business or Edu",files:40,note:"40 files per project"}};
+const FOCUS = ["Career","Business","Money","Content & creative","Health & fitness","Study","Relationships","Life direction"];
+const PRESETS = [
+ {name:"Alex Hormozi",link:"@AlexHormozi",lens:"Offers, pricing, sales, scaling a business",area:"Business"},
+ {name:"Codie Sanchez",link:"@CodieSanchezCT",lens:"Buying small businesses, cash flow, ownership",area:"Business"},
+ {name:"Dan Koe",link:"@DanKoeTalks",lens:"One-person business, writing, focus",area:"Business"},
+ {name:"Chris Do",link:"@thefutur",lens:"Creative business, pricing creative work, clients",area:"Creative"},
+ {name:"Ali Abdaal",link:"@aliabdaal",lens:"Productivity, habits, building online",area:"Productivity"},
+ {name:"Cal Newport",link:"@CalNewportMedia",lens:"Deep work, career capital, digital minimalism",area:"Career"},
+ {name:"Ramit Sethi",link:"@ramitsethi",lens:"Money, spending on what matters, couples and money",area:"Money"},
+ {name:"Naval",link:"@NavalR",lens:"Wealth, leverage, judgement, happiness",area:"Life"},
+ {name:"Andrew Huberman",link:"@hubermanlab",lens:"Sleep, focus and health science",area:"Health"},
+ {name:"Jeff Nippard",link:"@JeffNippard",lens:"Evidence-based training and fitness",area:"Fitness"},
+ {name:"Mel Robbins",link:"@melrobbins",lens:"Confidence, motivation, big life changes",area:"Life"},
+ {name:"Justin Sung",link:"@JustinSung",lens:"Learning, studying, thinking skills",area:"Study"}
+];
+const EXAMPLES = {
+ "Career":"council this: I've been offered a job at a bigger company for 15% more pay, but I'd lose the flexible hours I have now. I care most about learning fast and keeping time for side projects. I need to answer by Friday.",
+ "Business":"council this: Should I raise my prices from $500 to $900 per project, or keep them and take on more clients? I have 4 regular clients and I'm close to fully booked. I care most about income without burning out.",
+ "Money":"council this: I have $10k saved. Should I put it towards a car I need for work, or keep it as an emergency fund and buy a cheaper car on finance? I care most about not being stuck if something goes wrong.",
+ "Content & creative":"council this: Should I post short videos every day for 90 days, or one longer video a week? I have about 8 hours a week for content. I care most about growing an audience that pays.",
+ "Health & fitness":"council this: Should I train 5 days a week with a new program, or keep my 3-day routine and fix my sleep first? I care most about sticking with it long term.",
+ "Study":"council this: Should I drop to part-time study to work more hours, or stay full-time and finish a year earlier? I care most about not going into more debt.",
+ "Relationships":"council this: Should I move cities for a better job even though my partner can't move for another year? We both care about the relationship, and I care about my career momentum.",
+ "Life direction":"council this: Should I take a 6-month break to travel and figure out what's next, or stay in my job until I have a clear plan? I care most about not wasting my 20s."
+};
+const STEPS = [
+ {id:"start",title:"Start"},
+ {id:"you",title:"About you"},
+ {id:"mentors",title:"Your mentors"},
+ {id:"seats",title:"Thinking seats"},
+ {id:"style",title:"Style"},
+ {id:"build",title:"Build mentor files"},
+ {id:"chatgpt",title:"Set up ChatGPT"},
+ {id:"test",title:"First council"}
+];
+const KEY = "decision-council-setup-v2";
+const DEFAULT = {step:0,name:"My Council",about:"",focus:[],plan:"plus",mentors:[],seats:["contrarian","executor"],seatsTouched:false,style:"direct",length:"standard",mode:"full",language:"English",os:guessOs(),checks:{},testMsg:""};
+let S = load();
+
+function guessOs(){try{return /Win/i.test(navigator.platform||navigator.userAgent)?"win":"mac"}catch(e){return "mac"}}
+function load(){try{const r=localStorage.getItem(KEY);if(r){return Object.assign({},DEFAULT,JSON.parse(r))}}catch(e){}return JSON.parse(JSON.stringify(DEFAULT))}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function slugify(n){return (n.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,""))||"mentor"}
+function clean(s){return String(s||"").replace(/[|"`$\\]/g,"").replace(/\s+/g," ").trim()}
+function toast(m){const t=document.getElementById("toast");t.textContent=m;t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,1800)}
+function linkOk(raw){const s=raw.trim();if(!s)return false;if(/^@[\w.\-]+$/.test(s))return true;return s.split(",").every(x=>/^(https?:\/\/)?((www|m|music)\.)?(youtube\.com|youtu\.be)\/\S+$/i.test(x.trim())||/^@[\w.\-]+$/.test(x.trim()))}
+function cap(){return Math.min(PLANS[S.plan].files,10)}
+function mentorsOn(){return S.mentors.filter(m=>m.name.trim()&&linkOk(m.link))}
+function skipBuild(){return mentorsOn().length===0}
+
+// ---------- the instructions, same rules as tools/render_prompt.py
+function renderInstructions(){
+ let about="";
+ if(S.about.trim()||S.focus.length){about="\n## About me\n";if(S.about.trim())about+=S.about.trim()+"\n";if(S.focus.length)about+="I'll mostly bring decisions about: "+S.focus.join(", ")+".\n"}
+ const parts=[];const ms=mentorsOn();
+ if(ms.length){parts.push("Mentors (each has a file in this project):");ms.forEach(m=>parts.push("- "+clean(m.name)+(clean(m.lens)?": "+clean(m.lens):"")))}
+ let seats=S.seats.filter(k=>OPTS.seats[k]);
+ if(!ms.length&&!seats.length)seats=Object.keys(OPTS.seats);
+ if(seats.length){parts.push("Thinking seats:");seats.forEach(k=>parts.push("- "+OPTS.seats[k].line))}
+ const lang=/^\s*(english)?\s*$/i.test(S.language)?"":"Reply in "+S.language.trim()+".";
+ const vals={COUNCIL_NAME:S.name.trim()||"My Council",ABOUT_BLOCK:about,SEATS_BLOCK:parts.join("\n"),LENGTH:OPTS.lengths[S.length],STYLE_LINE:OPTS.styles[S.style],LANGUAGE_LINE:lang,DEFAULT_MODE:OPTS.modes[S.mode]};
+ let t=TEMPLATE;for(const k in vals)t=t.split("{{"+k+"}}").join(vals[k]);
+ return t.replace(/ \n/g,"\n").trim()+"\n";
+}
+function mentorSpec(m){const c=Number(m.count)||25;return [clean(m.name),clean(m.link),String(c),clean(m.words),clean(m.lens)].join(" | ")}
+function command(os){
+ const ms=mentorsOn();if(!ms.length)return "";
+ if(os==="win"){
+  return "$d = Join-Path ([Environment]::GetFolderPath('Desktop')) 'my-council'; New-Item -ItemType Directory -Force $d | Out-Null; Set-Location $d; "+
+   "curl.exe -fsSL "+SCRIPT_URL+" -o build_mentors.py; $py = if (Get-Command py -ErrorAction SilentlyContinue) {'py'} else {'python'}; & $py build_mentors.py "+
+   ms.map(m=>'--mentor "'+mentorSpec(m)+'"').join(" ");
+ }
+ return "mkdir -p ~/Desktop/my-council && cd ~/Desktop/my-council && curl -fsSL "+SCRIPT_URL+" -o build_mentors.py && python3 build_mentors.py \\\n"+
+  ms.map(m=>'  --mentor "'+mentorSpec(m)+'"').join(" \\\n");
+}
+
+// ---------- shell
+function rail(){
+ const ol=document.getElementById("rail");
+ ol.innerHTML=STEPS.map((s,i)=>{
+  const cls=[i<S.step?"done":"",s.id==="build"&&skipBuild()?"skip":""].join(" ");
+  return `<li><button type="button" data-go="${i}" class="${cls}" ${i===S.step?'aria-current="step"':""}><span class="n">${i<S.step?"\u2713":i+1}</span><span class="t">${esc(s.title)}</span></button></li>`}).join("");
+}
+function navRow(nextLabel,nextOk=true,hint=""){
+ const first=S.step===0,last=S.step===STEPS.length-1;
+ return `<div class="nav"><button class="btn" type="button" data-nav="-1" ${first?"hidden":""}>Back</button>
+ <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-left:auto">${hint?`<span class="hint">${hint}</span>`:""}${last?"":`<button class="btn primary" type="button" data-nav="1" ${nextOk?"":"disabled"}>${esc(nextLabel||"Next")}</button>`}</div></div>`;
+}
+function roster(){
+ const ms=mentorsOn();let seats=S.seats.filter(k=>OPTS.seats[k]);if(!ms.length&&!seats.length)seats=Object.keys(OPTS.seats);
+ const total=ms.length+seats.length;
+ let note=total<2?`<span class="err">Add at least two seats so there's someone to disagree with.</span>`:total>7?`<span class="err">${total} seats makes long replies. 3 to 6 reads best.</span>`:`<span class="okline">${total} seats. Good size for a real argument.</span>`;
+ return `<div class="roster"><div class="lbl">Your council so far</div><div class="seats">${ms.map(m=>`<span class="seat">${esc(clean(m.name))}</span>`).join("")}${seats.map(k=>`<span class="seat t">${esc(OPTS.seats[k].label)}</span>`).join("")}<span class="seat c">The Chair</span></div>${note}</div>`;
+}
+function copyBox(id,label,text){return `<div class="copybox"><div class="copybar"><small>${esc(label)}</small><button class="btn sm primary" type="button" data-copy="${id}">Copy</button></div><pre id="${id}">${esc(text)}</pre></div>`}
+
+// ---------- steps
+const VIEWS={
+start(){return `<div><div class="eyebrow">For ChatGPT \u00b7 free</div><h1>Build your own decision council</h1>
+ <p class="lede">You pick the people you learn from on YouTube. A free tool turns their videos into files ChatGPT can read. Then every hard decision gets argued out by your mentors, plus a couple of sharp thinking styles, and a Chair gives you one recommendation and a first step.</p></div>
+ <div class="diagram"><svg viewBox="0 0 660 250" role="img" aria-label="Mentors and thinking seats give blind openings, debate the cruxes, then the Chair scores the options">
+ <g font-family="Instrument Sans, system-ui, sans-serif" font-size="13" text-anchor="middle">
+ <text x="130" y="16" fill="var(--muted)" font-size="11" letter-spacing="1">YOUR MENTORS (FROM YOUTUBE)</text>
+ <text x="510" y="16" fill="var(--muted)" font-size="11" letter-spacing="1">THINKING SEATS</text>
+ <g stroke="var(--accent)" stroke-width="1.5" fill="var(--accent-soft)"><rect x="10" y="26" width="110" height="40" rx="8"/><rect x="132" y="26" width="110" height="40" rx="8"/><rect x="254" y="26" width="0" height="0"/></g>
+ <g stroke="var(--line)" stroke-width="1.5" fill="var(--surface)"><rect x="410" y="26" width="110" height="40" rx="8"/><rect x="532" y="26" width="118" height="40" rx="8"/></g>
+ <g fill="var(--fg)" font-weight="600"><text x="65" y="51">Mentor A</text><text x="187" y="51">Mentor B</text><text x="465" y="51">Contrarian</text><text x="591" y="51">Executor</text></g>
+ <text x="330" y="51" fill="var(--muted)">+ more</text>
+ <g stroke="var(--muted)" stroke-width="1.2" fill="none"><path d="M65 66 L300 100"/><path d="M187 66 L315 100"/><path d="M465 66 L345 100"/><path d="M591 66 L360 100"/></g>
+ <rect x="190" y="100" width="280" height="36" rx="8" fill="var(--surface)" stroke="var(--line)" stroke-width="1.5"/>
+ <text x="330" y="123" fill="var(--fg)">Blind openings, each rates every option</text>
+ <path d="M330 136 L330 152" stroke="var(--muted)" stroke-width="1.2"/>
+ <rect x="190" y="152" width="280" height="36" rx="8" fill="var(--surface)" stroke="var(--line)" stroke-width="1.5"/>
+ <text x="330" y="175" fill="var(--fg)">Cruxes, then they argue by name</text>
+ <path d="M330 188 L330 204" stroke="var(--muted)" stroke-width="1.2"/>
+ <rect x="170" y="204" width="320" height="42" rx="8" fill="var(--chair-soft)" stroke="var(--chair)" stroke-width="2"/>
+ <text x="330" y="222" fill="var(--chair)" font-weight="700">The Chair scores the options by rule</text>
+ <text x="330" y="238" fill="var(--muted)" font-size="12">one call \u00b7 what would flip it \u00b7 first step</text>
+ </g></svg></div>
+ <div class="facts"><div class="fact"><b>15 min</b><span>to set up, once</span></div><div class="fact"><b>$0</b><span>works on free ChatGPT</span></div><div class="fact"><b>2 to 6</b><span>seats on your council</span></div><div class="fact"><b>Cited</b><span>mentor points link to the exact video moment</span></div></div>
+ <div><div class="lbl" style="margin-bottom:6px">You'll need</div><ul class="muted small" style="margin:0;padding-left:18px">
+ <li>A ChatGPT account (free works)</li><li>A Mac or Windows computer for one step, to make the mentor files. You can skip mentors and still use the council.</li></ul></div>
+ <p class="hint">Your answers save in this browser as you go. Come back any time to change your council.</p>
+ ${navRow("Start setup")}`},
+you(){return `<div><div class="eyebrow">Step 2</div><h2>About you</h2><p class="lede">The council gives better advice when it knows your situation. Keep it short. It goes into the instructions ChatGPT reads every time.</p></div>
+ <div class="row"><div class="field"><label for="f-name">Council name</label><input type="text" id="f-name" maxlength="40" value="${esc(S.name)}"><span class="hint">Also the name of your ChatGPT Project.</span></div>
+ <div class="field"><label for="f-plan">Your ChatGPT plan</label><select id="f-plan">${Object.entries(PLANS).map(([k,p])=>`<option value="${k}" ${S.plan===k?"selected":""}>${p.label} (${p.note})</option>`).join("")}</select><span class="hint">Each mentor is one file. Free fits 5 mentors; other plans up to 10.</span></div></div>
+ <div class="field"><label for="f-about">About you <span class="muted" style="font-weight:400">(optional)</span></label>
+ <textarea id="f-about" maxlength="600" placeholder="e.g. 24, Brisbane. Junior designer, freelancing on the side. Saving for a house. Want my own studio in 3 years. I overthink and stall on big calls.">${esc(S.about)}</textarea>
+ <span class="counter" id="aboutCount">${S.about.length}/600</span></div>
+ <div class="field"><span class="lbl">What will you bring to the council?</span><div class="chips" role="group" aria-label="Decision areas">${FOCUS.map(f=>`<button type="button" class="chip" data-focus="${esc(f)}" aria-pressed="${S.focus.includes(f)}">${esc(f)}</button>`).join("")}</div></div>
+ ${navRow("Next: pick mentors")}`},
+mentors(){const ms=S.mentors;const left=cap()-mentorsOn().length;
+ return `<div><div class="eyebrow">Step 3</div><h2>Your mentors</h2><p class="lede">Point at any YouTube channel, playlist or video. The free tool reads the captions of their most-watched videos, and that file becomes the only thing the council can use for them. No file, no opinion.</p></div>
+ <div class="field"><span class="lbl">Quick add</span><span class="hint">Checked links. Tap to add or remove, then edit any detail below.</span>
+ <div class="presets">${PRESETS.map((p,i)=>{const on=ms.some(m=>m.link.trim().toLowerCase()===p.link.toLowerCase());return `<button type="button" class="preset" data-preset="${i}" aria-pressed="${on}"><b>${esc(p.name)}</b><span>${esc(p.area)} \u00b7 ${esc(p.link)}</span></button>`}).join("")}</div></div>
+ <div class="field"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><span class="lbl">Your list (${mentorsOn().length} of ${cap()} on ${esc(PLANS[S.plan].label)})</span><button class="btn sm" type="button" id="addMentor" ${ms.length>=cap()?"disabled":""}>+ Add anyone</button></div>
+ <div class="mlist">${ms.length?ms.map((m,i)=>mentorCard(m,i)).join(""):`<p class="hint">No mentors yet. Add from the list above, or add anyone with a YouTube channel.</p>`}</div></div>
+ ${roster()}
+ ${navRow(mentorsOn().length?"Next: thinking seats":"Skip mentors for now",true,left<0?"Over your plan's file limit":"")}`},
+seats(){const ms=mentorsOn().length;const rec=ms?["contrarian","executor"]:Object.keys(OPTS.seats);
+ return `<div><div class="eyebrow">Step 4</div><h2>Thinking seats</h2><p class="lede">These seats have no files. They argue from logic and your situation, and they stop your mentors from all nodding along. ${ms?"With mentors on board, the Contrarian and the Executor add the most.":"With no mentors, run all five."}</p></div>
+ <div class="choices" role="group" aria-label="Thinking seats">${Object.entries(OPTS.seats).map(([k,v])=>`<button type="button" class="choice" data-seat="${k}" aria-pressed="${S.seats.includes(k)}"><b>${esc(v.label)} ${rec.includes(k)?'<span class="tag rec">pick</span>':""}</b><span>${esc(v.short)}</span></button>`).join("")}</div>
+ ${roster()}
+ ${navRow("Next: style",true)}`},
+style(){const opt=(group,val,label,sub)=>`<button type="button" class="choice" data-opt="${group}" data-val="${val}" aria-pressed="${S[group]===val}"><b>${label}</b><span>${sub}</span></button>`;
+ return `<div><div class="eyebrow">Step 5</div><h2>How the council talks to you</h2></div>
+ <div class="field"><span class="lbl">Honesty</span><div class="choices">${opt("style","gentle","Gentle","Warm, still names the risks")}${opt("style","direct","Direct","Says plainly what's weak")}${opt("style","brutal","Brutal","Leads with the problem, no softening")}</div></div>
+ <div class="field"><span class="lbl">Length of each seat's opening</span><div class="choices">${opt("length","short","Short","50 to 80 words")}${opt("length","standard","Standard","80 to 150 words")}${opt("length","long","Long","150 to 250 words")}</div></div>
+ <div class="field"><span class="lbl">Default run</span><div class="choices">${opt("mode","full","Full council","Openings, cruxes, debate, verdict")}${opt("mode","quick","Quick council","Short openings, straight to the verdict")}</div><span class="hint">You can always say "quick council" or "full council" in the chat.</span></div>
+ <div class="field" style="max-width:280px"><label for="f-lang">Reply language</label><input type="text" id="f-lang" maxlength="30" value="${esc(S.language)}"></div>
+ ${navRow(skipBuild()?"Next: set up ChatGPT":"Next: build mentor files")}`},
+build(){
+ if(skipBuild())return `<div><div class="eyebrow">Step 6</div><h2>No mentor files needed</h2><p class="lede">You skipped mentors, so your council runs on thinking seats. You can add mentors later: come back to step 3.</p></div>${navRow("Next: set up ChatGPT")}`;
+ const ms=mentorsOn();const mac=S.os!=="win";
+ return `<div><div class="eyebrow">Step 6</div><h2>Build your mentor files</h2><p class="lede">One paste into your computer's terminal. It downloads the free tool, reads the captions from your mentors' videos (${ms.map(m=>esc(clean(m.name))).join(", ")}), and puts one file per mentor in a folder on your Desktop. About 1 to 3 minutes per mentor.</p></div>
+ <div class="tabs" role="tablist" aria-label="Computer"><button type="button" role="tab" data-os="mac" aria-selected="${mac}">Mac</button><button type="button" role="tab" data-os="win" aria-selected="${!mac}">Windows</button></div>
+ <ol class="steps">
+ <li><div><b>${mac?"Open Terminal":"Open PowerShell"}</b><span class="muted small">${mac?"Press Cmd + Space, type Terminal, press Return.":"Press the Windows key, type PowerShell, press Enter."}</span></div></li>
+ <li><div><b>Check Python is there</b><span class="muted small">${mac?`Type <span class="kbd">python3 --version</span> and press Return. If a box asks to install developer tools, click Install and wait for it to finish.`:`Type <span class="kbd">py --version</span> and press Enter. If it's not found, install Python from <a href="https://www.python.org/downloads/windows/" target="_blank" rel="noopener">python.org</a> and tick "Add python.exe to PATH", then open a new PowerShell window.`}</span></div></li>
+ <li><div><b>Copy this, paste it in, press ${mac?"Return":"Enter"}</b>${copyBox("cmd",mac?"Terminal command":"PowerShell command",command(mac?"mac":"win"))}<span class="hint">The first run spends about a minute setting up the free YouTube reader (yt-dlp). Re-runs are quicker and skip videos already read.${mac?" If your Mac asks whether Terminal can use your Desktop folder, click Allow.":""}</span></div></li>
+ <li><div><b>Wait for "Done"</b><span class="muted small">The <span class="kbd">my-council/council-files</span> folder opens on your Desktop with ${ms.map(m=>`<span class="kbd">mentor-${esc(slugify(clean(m.name)))}.md</span>`).join(" ")}</span></div></li>
+ </ol>
+ <details><summary>It says "Sign in to confirm you're not a bot"</summary><div><p>YouTube is being careful with your connection. Sign in to YouTube in Chrome (or Edge, Firefox, Safari), then run the same command with this added to the end:</p><p><span class="kbd">--cookies-from-browser chrome</span></p></div></details>
+ <details><summary>A video was "skipped (no captions)"</summary><div><p>Some videos have no captions. The tool skips them and keeps going. If a whole mentor comes out empty, their channel may not use captions in English. Add <span class="kbd">--lang es</span> (or their language) to the end.</p></div></details>
+ <details><summary>I want different videos</summary><div><p>Edit the mentor in step 3: change the number of videos, or add title words so only matching videos are used (for example "pricing, sales"). Add <span class="kbd">--sort recent</span> to the end to take the newest videos instead of the most watched.</p></div></details>
+ <details><summary>No Mac or Windows computer?</summary><div><p>Ask a friend with a laptop to run the command and send you the files, or skip mentors and use thinking seats only. The files are plain text.</p></div></details>
+ <label class="check"><input type="checkbox" data-check="files" ${S.checks.files?"checked":""}> I have my mentor files</label>
+ ${navRow("Next: set up ChatGPT")}`},
+chatgpt(){const ins=renderInstructions();const n=ins.length;const ms=mentorsOn();
+ return `<div><div class="eyebrow">Step 7</div><h2>Set up ChatGPT</h2><p class="lede">A ChatGPT Project keeps your council's instructions and files together. Every chat inside it is a council session.</p></div>
+ <ol class="steps">
+ <li><div><b>Make a project</b><span class="muted small">In ChatGPT's sidebar, choose <b>New project</b> and name it <span class="kbd">${esc(S.name.trim()||"My Council")}</span>.</span></div></li>
+ ${ms.length?`<li><div><b>Add your mentor files</b><span class="muted small">In the project, choose <b>Add files</b> and select everything in <span class="kbd">Desktop/my-council/council-files</span>. That's ${ms.length} file${ms.length>1?"s":""}.</span></div></li>`:""}
+ <li><div><b>Paste the instructions</b><span class="muted small">Open the project's settings (or the <b>Instructions</b> box), paste this, and save.</span>
+ ${copyBox("ins","Project instructions",ins)}<span class="counter ${n>OPTS.limit?"over":""}">${n.toLocaleString()} / ${OPTS.limit.toLocaleString()} characters ${n>OPTS.limit?"\u00b7 too long: shorten 'About you' or remove a mentor":"\u00b7 fits"}</span></div></li>
+ </ol>
+ <div class="callout">Changing your council later: change your answers here, then copy the instructions again and paste over the old ones. New mentors need step 6 again and the new file uploaded.</div>
+ <label class="check"><input type="checkbox" data-check="project" ${S.checks.project?"checked":""}> My project is set up</label>
+ ${navRow("Next: first council")}`},
+test(){const f=S.focus[0]||"Career";const msg=S.testMsg||EXAMPLES[f]||EXAMPLES.Career;
+ return `<div><div class="eyebrow">Step 8</div><h2>Run your first council</h2><p class="lede">Start a new chat inside your project and send a real decision. Give it the options, what matters most and any deadline. If you leave something out, it asks once.</p></div>
+ <div class="field"><label for="f-test">Try this, or write your own</label><textarea id="f-test">${esc(msg)}</textarea><div><button class="btn sm primary" type="button" data-copytext="f-test">Copy message</button></div></div>
+ <div class="field"><span class="lbl">A good first council has</span>
+ <label class="check"><input type="checkbox" data-check="t1" ${S.checks.t1?"checked":""}> Each mentor cites a video with a timestamp link that opens at the right moment</label>
+ <label class="check"><input type="checkbox" data-check="t2" ${S.checks.t2?"checked":""}> A score table with every seat's rating for every option</label>
+ <label class="check"><input type="checkbox" data-check="t3" ${S.checks.t3?"checked":""}> At least one real disagreement, and someone who changed their mind or held firm</label>
+ <label class="check"><input type="checkbox" data-check="t4" ${S.checks.t4?"checked":""}> One recommendation and a first step for the next 48 hours</label>
+ <span class="hint">If a mentor gives no links, say "use the files in this project and cite them". If links are missing on every run, check the files uploaded in step 7.</span></div>
+ <div class="field"><span class="lbl">Things you can say</span><div class="wrapx"><table class="cmds"><tbody>
+ <tr><td><span class="kbd">quick council</span></td><td>Short openings, straight to the verdict</td></tr>
+ <tr><td><span class="kbd">go deeper</span></td><td>Another round of arguing, then an updated verdict</td></tr>
+ <tr><td><span class="kbd">ask ${esc(clean((mentorsOn()[0]||{}).name)||"the Contrarian")} ...</span></td><td>Only that seat answers</td></tr>
+ <tr><td><span class="kbd">who's on my council</span></td><td>Lists the seats and files it can see</td></tr>
+ <tr><td><span class="kbd">drop ... / add ...</span></td><td>Change the seats for this one decision</td></tr></tbody></table></div></div>
+ <p class="hint">Mentors here are simulations built from public videos, not the real people. Use the files for yourself only, don't republish them. For health, legal or big money calls, check with a professional too. Tool and source: <a href="${REPO_URL}" target="_blank" rel="noopener">github.com/ayotho/decision-council</a></p>
+ ${navRow("")}`}
+};
+function mentorCard(m,i){const ok=linkOk(m.link);
+ return `<div class="mcard"><div class="top"><b>${esc(m.name||"New mentor")}</b><button class="btn sm" type="button" data-del="${i}" aria-label="Remove ${esc(m.name||"mentor")}">Remove</button></div>
+ <div class="mgrid"><div class="field"><label for="m-name-${i}">Name</label><input type="text" id="m-name-${i}" data-m="${i}" data-k="name" maxlength="40" value="${esc(m.name)}"></div>
+ <div class="field"><label for="m-link-${i}">YouTube link</label><input type="text" id="m-link-${i}" data-m="${i}" data-k="link" placeholder="@handle or youtube.com/..." value="${esc(m.link)}">${m.link&&!ok?`<span class="err">Use a YouTube channel (@handle), playlist or video link</span>`:""}</div></div>
+ <div class="field"><label for="m-lens-${i}">Good for</label><input type="text" id="m-lens-${i}" data-m="${i}" data-k="lens" maxlength="80" placeholder="e.g. pricing, sales, hiring" value="${esc(m.lens)}"></div>
+ <div class="mgrid"><div class="field"><label for="m-count-${i}">Videos to read</label><select id="m-count-${i}" data-m="${i}" data-k="count">${[10,25,50,100].map(n=>`<option value="${n}" ${Number(m.count)===n?"selected":""}>${n} most watched</option>`).join("")}</select></div>
+ <div class="field"><label for="m-words-${i}">Only titles with <span class="muted" style="font-weight:400">(optional)</span></label><input type="text" id="m-words-${i}" data-m="${i}" data-k="words" placeholder="e.g. money, career" value="${esc(m.words)}"></div></div></div>`}
+
+function render(focusId){
+ rail();document.getElementById("main").innerHTML=`<section class="panel" aria-labelledby="h">${VIEWS[STEPS[S.step].id]()}</section>`;
+ const h=document.querySelector("main h1,main h2");if(h)h.id="h";
+ if(focusId){const el=document.getElementById(focusId);if(el){el.focus();const v=el.value;if(el.setSelectionRange&&typeof v==="string"){try{el.setSelectionRange(v.length,v.length)}catch(e){}}}}
+}
+function go(i){S.step=Math.max(0,Math.min(STEPS.length-1,i));save();render();window.scrollTo({top:0,behavior:"smooth"});const h=document.getElementById("h");if(h){h.setAttribute("tabindex","-1");h.focus({preventScroll:true})}}
+
+document.addEventListener("click",e=>{
+ const b=e.target.closest("button");if(!b)return;
+ if(b.dataset.go!==undefined)return go(+b.dataset.go);
+ if(b.dataset.nav)return go(S.step+ +b.dataset.nav);
+ if(b.dataset.focus){const f=b.dataset.focus;S.focus=S.focus.includes(f)?S.focus.filter(x=>x!==f):[...S.focus,f];save();return render()}
+ if(b.dataset.preset!==undefined){const p=PRESETS[+b.dataset.preset];const idx=S.mentors.findIndex(m=>m.link.trim().toLowerCase()===p.link.toLowerCase());
+  if(idx>=0)S.mentors.splice(idx,1);else{if(S.mentors.length>=cap())return toast(`Your plan fits ${cap()} mentors`);S.mentors.push({name:p.name,link:p.link,lens:p.lens,count:25,words:""})}save();return render()}
+ if(b.id==="addMentor"){if(S.mentors.length>=cap())return toast(`Your plan fits ${cap()} mentors`);S.mentors.push({name:"",link:"",lens:"",count:25,words:""});save();return render(`m-name-${S.mentors.length-1}`)}
+ if(b.dataset.del!==undefined){S.mentors.splice(+b.dataset.del,1);save();return render()}
+ if(b.dataset.seat){const k=b.dataset.seat;S.seats=S.seats.includes(k)?S.seats.filter(x=>x!==k):[...S.seats,k];S.seatsTouched=true;save();return render()}
+ if(b.dataset.opt){S[b.dataset.opt]=b.dataset.val;save();return render()}
+ if(b.dataset.os){S.os=b.dataset.os;save();return render()}
+ if(b.dataset.copy){return copy(document.getElementById(b.dataset.copy).textContent,b)}
+ if(b.dataset.copytext){return copy(document.getElementById(b.dataset.copytext).value,b)}
+});
+document.addEventListener("input",e=>{
+ const t=e.target;
+ if(t.dataset.m!==undefined){const m=S.mentors[+t.dataset.m];m[t.dataset.k]=t.value;save();
+  if(t.dataset.k==="link"||t.dataset.k==="name"){clearTimeout(render._t);render._t=setTimeout(()=>render(t.id),500)}return}
+ if(t.id==="f-name"){S.name=t.value;save()}
+ if(t.id==="f-about"){S.about=t.value;document.getElementById("aboutCount").textContent=t.value.length+"/600";save()}
+ if(t.id==="f-lang"){S.language=t.value;save()}
+ if(t.id==="f-test"){S.testMsg=t.value;save()}
+});
+document.addEventListener("change",e=>{
+ const t=e.target;
+ if(t.id==="f-plan"){S.plan=t.value;save();render()}
+ if(t.dataset.m!==undefined&&t.tagName==="SELECT"){S.mentors[+t.dataset.m][t.dataset.k]=+t.value;save()}
+ if(t.dataset.check){S.checks[t.dataset.check]=t.checked;save()}
+});
+function copy(text,btn){const done=m=>{const o=btn.textContent;btn.textContent=m;setTimeout(()=>btn.textContent=o,1600)};
+ try{navigator.clipboard.writeText(text).then(()=>done("Copied"),()=>fallback())}catch(e){fallback()}
+ function fallback(){const pre=btn.closest(".copybox")?.querySelector("pre");if(pre){const r=document.createRange();r.selectNodeContents(pre);const s=getSelection();s.removeAllRanges();s.addRange(r);done("Selected: press copy")}else{done("Select and copy")}}}
+document.getElementById("exportBtn").addEventListener("click",function(){const {step,checks,...rest}=S;const code="DC1:"+btoa(unescape(encodeURIComponent(JSON.stringify(rest))));
+ try{navigator.clipboard.writeText(code).then(()=>toast("Setup code copied. Send it to anyone to load your council."),()=>prompt2(code))}catch(e){prompt2(code)}});
+function prompt2(code){S.step=S.step;document.getElementById("main").insertAdjacentHTML("afterbegin",`<div class="copybox" style="margin-bottom:12px"><div class="copybar"><small>Your setup code: select and copy</small></div><pre>${esc(code)}</pre></div>`)}
+document.getElementById("importBtn").addEventListener("click",()=>{
+ document.getElementById("main").innerHTML=`<section class="panel"><div><div class="eyebrow">Load a setup</div><h2>Paste a setup code</h2><p class="lede">Someone set up a council for you, or you're moving to another device. Paste the code that starts with DC1.</p></div>
+ <div class="field"><label for="f-code">Setup code</label><textarea id="f-code" placeholder="DC1:..."></textarea><span class="err" id="codeErr" hidden>That code didn't work. Copy it again and paste the whole thing.</span></div>
+ <div class="nav"><button class="btn" type="button" data-go="${S.step}">Cancel</button><button class="btn primary" type="button" id="loadCode">Load it</button></div></section>`;
+ document.getElementById("loadCode").addEventListener("click",()=>{try{const raw=document.getElementById("f-code").value.trim().replace(/^DC1:/,"");const data=JSON.parse(decodeURIComponent(escape(atob(raw))));S=Object.assign({},DEFAULT,data,{step:1,checks:{}});save();render();toast("Setup loaded")}catch(e){document.getElementById("codeErr").hidden=false}});
+});
+document.getElementById("resetBtn").addEventListener("click",function(){if(this.dataset.armed){S=JSON.parse(JSON.stringify(DEFAULT));save();delete this.dataset.armed;this.textContent="Start over";render();toast("Cleared")}else{this.dataset.armed="1";this.textContent="Tap again to clear everything";setTimeout(()=>{delete this.dataset.armed;this.textContent="Start over"},3000)}});
+render();
+</script>
