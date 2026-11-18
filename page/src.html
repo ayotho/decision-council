@@ -144,34 +144,12 @@ table.cmds td:first-child{white-space:nowrap;width:1%}
 <script>
 const TEMPLATE = __TEMPLATE_JSON__;
 const OPTS = __OPTIONS_JSON__;
-const SCRIPT_URL = "https://raw.githubusercontent.com/ayotho/decision-council/main/tools/build_mentors.py";
+const SCRIPT_URL = OPTS.script_url;
 const REPO_URL = "https://github.com/ayotho/decision-council";
-const PLANS = {free:{label:"Free",files:5,note:"5 files per project"},plus:{label:"Go or Plus",files:25,note:"25 files per project"},pro:{label:"Pro, Business or Edu",files:40,note:"40 files per project"}};
-const FOCUS = ["Career","Business","Money","Content & creative","Health & fitness","Study","Relationships","Life direction"];
-const PRESETS = [
- {name:"Alex Hormozi",link:"@AlexHormozi",lens:"Offers, pricing, sales, scaling a business",area:"Business"},
- {name:"Codie Sanchez",link:"@CodieSanchezCT",lens:"Buying small businesses, cash flow, ownership",area:"Business"},
- {name:"Dan Koe",link:"@DanKoeTalks",lens:"One-person business, writing, focus",area:"Business"},
- {name:"Chris Do",link:"@thefutur",lens:"Creative business, pricing creative work, clients",area:"Creative"},
- {name:"Ali Abdaal",link:"@aliabdaal",lens:"Productivity, habits, building online",area:"Productivity"},
- {name:"Cal Newport",link:"@CalNewportMedia",lens:"Deep work, career capital, digital minimalism",area:"Career"},
- {name:"Ramit Sethi",link:"@ramitsethi",lens:"Money, spending on what matters, couples and money",area:"Money"},
- {name:"Naval",link:"@NavalR",lens:"Wealth, leverage, judgement, happiness",area:"Life"},
- {name:"Andrew Huberman",link:"@hubermanlab",lens:"Sleep, focus and health science",area:"Health"},
- {name:"Jeff Nippard",link:"@JeffNippard",lens:"Evidence-based training and fitness",area:"Fitness"},
- {name:"Mel Robbins",link:"@melrobbins",lens:"Confidence, motivation, big life changes",area:"Life"},
- {name:"Justin Sung",link:"@JustinSung",lens:"Learning, studying, thinking skills",area:"Study"}
-];
-const EXAMPLES = {
- "Career":"council this: I've been offered a job at a bigger company for 15% more pay, but I'd lose the flexible hours I have now. I care most about learning fast and keeping time for side projects. I need to answer by Friday.",
- "Business":"council this: Should I raise my prices from $500 to $900 per project, or keep them and take on more clients? I have 4 regular clients and I'm close to fully booked. I care most about income without burning out.",
- "Money":"council this: I have $10k saved. Should I put it towards a car I need for work, or keep it as an emergency fund and buy a cheaper car on finance? I care most about not being stuck if something goes wrong.",
- "Content & creative":"council this: Should I post short videos every day for 90 days, or one longer video a week? I have about 8 hours a week for content. I care most about growing an audience that pays.",
- "Health & fitness":"council this: Should I train 5 days a week with a new program, or keep my 3-day routine and fix my sleep first? I care most about sticking with it long term.",
- "Study":"council this: Should I drop to part-time study to work more hours, or stay full-time and finish a year earlier? I care most about not going into more debt.",
- "Relationships":"council this: Should I move cities for a better job even though my partner can't move for another year? We both care about the relationship, and I care about my career momentum.",
- "Life direction":"council this: Should I take a 6-month break to travel and figure out what's next, or stay in my job until I have a clear plan? I care most about not wasting my 20s."
-};
+const PLANS = OPTS.plans;
+const FOCUS = OPTS.focus;
+const PRESETS = OPTS.presets;
+const EXAMPLES = OPTS.examples;
 const STEPS = [
  {id:"start",title:"Start"},
  {id:"you",title:"About you"},

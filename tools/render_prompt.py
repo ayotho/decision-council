@@ -4,8 +4,12 @@
 The onboarding page does the same thing in the browser (keep the two in step).
 This script writes PROMPT.md, the no-setup default with the five thinking seats,
 and checks the result fits ChatGPT's 8,000-character limit for Project instructions.
+With --setup it writes the ChatGPT setup chat (templates/setup.md plus the template
+and options) into the README's copy box, so ChatGPT can interview someone and fill
+the same template itself.
 
   python3 tools/render_prompt.py                      # writes PROMPT.md
+  python3 tools/render_prompt.py --setup              # rebuilds the README setup box
   python3 tools/render_prompt.py --mentor "Alex Hormozi|Offers and pricing" --seat contrarian --print
 """
 from __future__ import annotations
@@ -70,13 +74,53 @@ def render(name="My Council", about="", focus=(), mentors=(), seats=tuple(SEATS)
     return t.replace(" \n", "\n").strip() + "\n"
 
 
+SETUP_START = "<!-- setup:start -->"
+SETUP_END = "<!-- setup:end -->"
+
+
+def render_setup() -> str:
+    o = _OPTS
+    tpl = (ROOT / "templates/instructions.md").read_text(encoding="utf-8").strip()
+    vals = {
+        "FOCUS": ", ".join(o["focus"]),
+        "PRESETS": "\n".join(f"- {p['name']} ({p['link']}): {p['lens']}" for p in o["presets"]),
+        "SEAT_MENU": "\n".join(f"   - {v['label']}: {v['short']}" for v in o["seats"].values()),
+        "EXAMPLE": o["examples"]["Career"],
+        "SCRIPT_URL": o["script_url"],
+        "LENGTHS": ", ".join(f'{k} = "{v}"' for k, v in o["lengths"].items()) + ".",
+        "STYLES": " ".join(f'{k}: "{v}"' for k, v in o["styles"].items()),
+        "MODES": " or ".join(f'"{v}"' for v in o["modes"].values()) + ".",
+        "SEAT_LINES": "\n".join("- " + v["line"] for v in o["seats"].values()),
+        "TEMPLATE": tpl,
+    }
+    t = (ROOT / "templates/setup.md").read_text(encoding="utf-8")
+    for k, v in vals.items():
+        t = t.replace("<<" + k + ">>", v)
+    assert "<<" not in t, "unfilled slot in templates/setup.md"
+    return t.strip() + "\n"
+
+
+def write_setup_into_readme() -> None:
+    readme = ROOT / "README.md"
+    text = readme.read_text(encoding="utf-8")
+    head, rest = text.split(SETUP_START, 1)
+    _, tail = rest.split(SETUP_END, 1)
+    box = SETUP_START + "\n```text\n" + render_setup() + "```\n" + SETUP_END
+    readme.write_text(head + box + tail, encoding="utf-8")
+
+
 def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--mentor", action="append", default=[], help='"Name|good for"')
     p.add_argument("--seat", action="append", choices=list(SEATS))
     p.add_argument("--print", action="store_true")
     p.add_argument("--skill", action="store_true", help="write council/SKILL.md instead of PROMPT.md")
+    p.add_argument("--setup", action="store_true", help="rebuild the ChatGPT setup box in README.md")
     a = p.parse_args()
+    if a.setup:
+        write_setup_into_readme()
+        print(f"setup box: {len(render_setup())} characters", file=sys.stderr)
+        return 0
     mentors = [tuple((m.split("|", 1) + [""])[:2]) for m in a.mentor]
     text = render(mentors=[(n.strip(), l.strip()) for n, l in mentors], seats=tuple(a.seat or SEATS))
     if len(text) > LIMIT:
@@ -92,8 +136,8 @@ def main() -> int:
     else:
         (ROOT / "PROMPT.md").write_text(
             "# Paste-in instructions (works on any ChatGPT plan)\n\n"
-            "This is the no-setup version with five thinking seats. For your own mentors, use the setup page\n"
-            "(link in the README), which writes a personalised version of this for you.\n\n"
+            "This is the no-setup version with five thinking seats. For your own mentors, use the setup chat\n"
+            "at the top of the README: ChatGPT interviews you and writes a personalised version of this.\n\n"
             "Copy everything below the line into ChatGPT: Project > Project settings > Instructions.\n\n---\n\n" + text,
             encoding="utf-8")
     print(f"{len(text)} characters (limit {LIMIT})", file=sys.stderr)

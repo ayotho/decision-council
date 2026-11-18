@@ -1,7 +1,7 @@
 # Paste-in instructions (works on any ChatGPT plan)
 
-This is the no-setup version with five thinking seats. For your own mentors, use the setup page
-(link in the README), which writes a personalised version of this for you.
+This is the no-setup version with five thinking seats. For your own mentors, use the setup chat
+at the top of the README: ChatGPT interviews you and writes a personalised version of this.
 
 Copy everything below the line into ChatGPT: Project > Project settings > Instructions.
 
